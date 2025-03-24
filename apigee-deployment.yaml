@@ -15,16 +15,26 @@ spec:
         app: apigee
     spec:
       containers:
-      - name: apigee
-        image: google/apigee-envoy-adapter:v2.1.4
-        ports:
-        - containerPort: 10000
+      - name: envoy
+        image: envoyproxy/envoy:contrib-dev
+        volumeMounts:
+        - mountPath: /etc/config
+          name: envoy-config
         args:
         - "-c"
-        - "/etc/config/config.yaml"
+        - "/etc/config/config-envoy.local.yaml"
+        ports:
+        - containerPort: 10000
+      - name: apigee-envoy-adapter
+        image: google/apigee-envoy-adapter:v2.1.4
+        args:
+        - "-c"
+        - "/etc/config/config-apigee.local.yaml"
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/config/application_default_credentials.json
+        ports:
+        - containerPort: 5000
         volumeMounts:
         - name: envoy-config
           mountPath: /etc/config
@@ -32,3 +42,16 @@ spec:
         - name: envoy-config
           secret:
             secretName: envoy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: apigee
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 10000

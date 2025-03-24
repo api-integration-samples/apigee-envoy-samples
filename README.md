@@ -1,17 +1,46 @@
-# Apigee Envoy Gateway Sample
-This project is an example for deploying the Apigee Envoy Adapter inside an Envoy Gateway deployment in Kubernetes.
+# Apigee Envoy Gateway Samples
+This project shows how to deploy and use apigee + envoy as a local gateway both in Kubernetes and in Cloud Run.
 
+## Prerequisites
+- Install the Apigee Envoy Adapter CLI in your environment.
 ```sh
-# step 1 - create secrets for Apigee Envoy config.yaml and application_default_credentials.json
-kubectl create secret generic envoy-config -n envoy-gateway-system \
-	--from-file=./config.yaml \
-	--from-file=/home/USER/.config/gcloud/application_default_credentials.json
+# see latest releases here: https://github.com/apigee/apigee-remote-service-cli/releases
+VERSION=2.1.4
+# download the cli
+wget "https://github.com/apigee/apigee-remote-service-cli/releases/download/v2.1.4/apigee-remote-service-cli_${VERSION}_linux_64-bit.tar.gz"
+# unpack
+tar -xf "apigee-remote-service-cli_${VERSION}_linux_64-bit.tar.gz"
+# remove tar
+rm "apigee-remote-service-cli_${VERSION}_linux_64-bit.tar.gz"
+# optional - copy to /usr/bin to more easily use
+sudo mv apigee-remote-service-cli /usr/bin
+```
+## Deployment
+```sh
+# set env variables where Apigee X is provisioned
+PROJECT_ID=YOUR_PROJECT_ID
+APIGEE_ENV=YOUR_APIGEE_ENVIRONMENT
+# the host is where the Apigee environment is reachable, i.e. 34-112-147-154.nip.io. you can list all of your apigee hosts with 'apigeecli envgroups list -o $PROJECT_ID -t $(gcloud auth print-access-token)'
+APIGEE_HOST=YOUR_APIGEE_HOST
+
+# provision the envoy adapter to Apigee - this only has to be done one time
+apigee-remote-service-cli provision --organization $PROJECT_ID --environment $APIGEE_ENV --runtime "https://$APIGEE_HOST" --token $(gcloud auth print-access-token) > config-apigee.local.yaml
+# the resulting config-apigee.local.yaml contains the key and configuration information for the envoy adapter.
+# change api operation identifier to header
+sed -i "/      append_metadata_headers: true/c\      append_metadata_headers: true\n      api_header: x-api-operation" config-apigee.local.yaml
+
+# copy envoy config with clusters and routes, or bring your own
+cp config-envoy.yaml config-envoy.local.yaml
+# replace Apigee host in envoy config with your host
+sed -i "s/APIGEE_HOST/$APIGEE_HOST/g" config-envoy.local.yaml
+
+# create secrets for all configuration, including local default credentials for testing
+kubectl create ns apigee
+kubectl create secret generic envoy-config -n apigee \
+  --from-file=./config-apigee.local.yaml \
+  --from-file=./config-envoy.local.yaml \
+  --from-file=/home/USER/.config/gcloud/application_default_credentials.json
 
 # step 2 - deploy apigee remote service into the cluster
-kubectl apply -f apigee-deployment.yaml -n envoy-gateway-system
-
-# step 3 - TODO WIP apply envoy bootstrap configuration to use apigee filters
-# get bootstrap config
-egctl config envoy-proxy all
-# TODO update with apigee filters and apply - https://gateway.envoyproxy.io/v1.0/tasks/operations/customize-envoyproxy/#customize-envoyproxy-bootstrap-config
+kubectl apply -f apigee-deployment.yaml -n apigee
 ```
