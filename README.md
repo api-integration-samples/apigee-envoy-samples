@@ -29,7 +29,7 @@ apigee-remote-service-cli provision --organization $PROJECT_ID --environment $AP
 # change api operation identifier to header
 sed -i "/      append_metadata_headers: true/c\      append_metadata_headers: true\n      api_header: x-api-operation" config-apigee.local.yaml
 
-# copy envoy config with clusters and routes, or bring your own
+# copy envoy config with example clusters and routes, or bring your own
 cp config-envoy.yaml config-envoy.local.yaml
 # replace Apigee host in envoy config with your host
 sed -i "s/APIGEE_HOST/$APIGEE_HOST/g" config-envoy.local.yaml
