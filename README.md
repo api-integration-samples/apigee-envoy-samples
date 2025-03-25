@@ -16,6 +16,31 @@ rm "apigee-remote-service-cli_${VERSION}_linux_64-bit.tar.gz"
 sudo mv apigee-remote-service-cli /usr/bin
 ```
 ## Deployment
+
+### Local Docker
+```sh
+# start apigee adapter
+docker run --rm -it \
+-v $(pwd)/config-apigee.local.yaml:/mnt/config/config.yaml \
+-e GOOGLE_APPLICATION_CREDENTIALS=/etc/envoy/application_default_credentials.json \
+-v $HOME/.config/gcloud/application_default_credentials.json:/etc/envoy/application_default_credentials.json:ro \
+-p 5000:5000 \
+google/apigee-envoy-adapter:v2.1.4 -c /mnt/config/config.yaml
+
+# start envoy proxy
+docker run --rm -it \
+--network host \
+-v $(pwd)/config-envoy.local.yaml:/mnt/config/config.yaml \
+-e GOOGLE_APPLICATION_CREDENTIALS=/mnt/config/application_default_credentials.json \
+-v $HOME/.config/gcloud/application_default_credentials.json:/mnt/config/application_default_credentials.json:ro \
+-p 9901:9901 -p 10000:10000 \
+envoyproxy/envoy:contrib-dev -c /mnt/config/config.yaml
+
+# call api
+curl -i http://localhost:10000/echo -H "x-api-key: test"
+```
+
+## Kubernetes
 ```sh
 # set env variables where Apigee X is provisioned
 PROJECT_ID=YOUR_PROJECT_ID
@@ -41,6 +66,9 @@ kubectl create secret generic envoy-config -n apigee \
   --from-file=./config-envoy.local.yaml \
   --from-file=/home/USER/.config/gcloud/application_default_credentials.json
 
-# step 2 - deploy apigee remote service into the cluster
+# deploy apigee remote service into the cluster
 kubectl apply -f apigee-deployment.yaml -n apigee
+
+# call api
+curl -i http://SERVICE_IP:8080/echo -H "x-api-key: test"
 ```
