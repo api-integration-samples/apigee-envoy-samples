@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: apigee-service
+  name: apigee
   labels:
     app: apigee
 spec:
@@ -23,6 +23,8 @@ spec:
         args:
         - "-c"
         - "/etc/config/config-envoy.local.yaml"
+        - "-l"
+        - "debug"
         ports:
         - containerPort: 10000
       - name: apigee-envoy-adapter
