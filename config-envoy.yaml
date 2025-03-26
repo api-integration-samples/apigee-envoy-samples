@@ -110,7 +110,7 @@ static_resources:
 
   # Apigee remote service
   - name: apigee-remote-service-envoy
-    type: LOGICAL_DNS
+    type: STATIC
     dns_lookup_family: V4_ONLY
     http2_protocol_options: {}
     load_assignment:
