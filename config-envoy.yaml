@@ -91,12 +91,7 @@ static_resources:
                   prefix: "/echo"
                 route:
                   cluster: echo_service
-              - match:
-                  prefix: "/large-model"
-                route:
-                  prefix_rewrite: "/payload/15"
-                  host_rewrite_literal: service-backend-api-323709580283.europe-west1.run.app
-                  cluster: service_large_payload
+
   clusters:
   
   # Local echo service
@@ -112,25 +107,6 @@ static_resources:
               socket_address:
                 address: echo-server.default.svc.cluster.local
                 port_value: 8080
-
-  # Large model payload test cluster
-  - name: service_large_payload
-    type: LOGICAL_DNS
-    dns_lookup_family: V4_ONLY
-    load_assignment:
-      cluster_name: service_large_payload
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: service-backend-api-323709580283.europe-west1.run.app
-                port_value: 443
-    transport_socket:
-      name: envoy.transport_sockets.tls
-      typed_config:
-        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-        sni: "service-backend-api-323709580283.europe-west1.run.app"
 
   # Apigee remote service
   - name: apigee-remote-service-envoy
