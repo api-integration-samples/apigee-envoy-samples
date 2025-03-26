@@ -111,6 +111,7 @@ static_resources:
   # Apigee remote service
   - name: apigee-remote-service-envoy
     type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
     http2_protocol_options: {}
     load_assignment:
       cluster_name: apigee-remote-service-envoy
@@ -121,6 +122,7 @@ static_resources:
               socket_address:
                 address: 127.0.0.1
                 port_value: 5000
+                ipv4_compat: true
     common_lb_config:
       healthy_panic_threshold:
         value: 50.0
