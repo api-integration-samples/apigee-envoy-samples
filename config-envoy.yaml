@@ -143,7 +143,7 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: "localhost"
+                address: localhost
                 port_value: 5000
     common_lb_config:
       healthy_panic_threshold:
